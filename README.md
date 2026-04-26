@@ -4,12 +4,6 @@
 
 <br/>
 
-<a href="#">
-  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&size=20&duration=2800&pause=900&color=818CF8&center=true&vCenter=true&multiline=true&width=750&height=70&lines=Patient+·+Provider+·+Admin+·+Three+Complete+Dashboards;OTP+Auth+·+Google+OAuth2+·+Razorpay+Payments+·+Dark+Mode;Fully+Connected+to+MediBook+Microservices+Backend" alt="Typing SVG" />
-</a>
-
-<br/>
-
 ![React](https://img.shields.io/badge/React_18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Vite](https://img.shields.io/badge/Vite_5-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
@@ -75,59 +69,59 @@
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════════════╗
-║                    MEDIBOOK FULL STACK OVERVIEW                                 ║
+║                    MEDIBOOK FULL STACK OVERVIEW                                  ║
 ╚══════════════════════════════════════════════════════════════════════════════════╝
 
   ┌──────────────────────────────────────────────────────────────────────────────┐
   │                    FRONTEND  (Vite + React 18)                               │
-  │                    http://localhost:5173                                      │
+  │                    http://localhost:5173                                     │
   │                                                                              │
-  │  ┌────────────┐  ┌────────────┐  ┌──────────────┐  ┌─────────────────────┐  │
-  │  │ Public     │  │  Patient   │  │  Provider    │  │  Admin              │  │
-  │  │ Pages      │  │  Portal    │  │  Portal      │  │  Portal             │  │
-  │  │            │  │            │  │              │  │                     │  │
-  │  │ Landing    │  │ Dashboard  │  │ Dashboard    │  │ Dashboard           │  │
-  │  │ FindDoctors│  │ Book Appt  │  │ Schedule     │  │ Users               │  │
-  │  │ DoctorProf │  │ Appointments│  │ Appointments │  │ Providers           │  │
-  │  │ Login      │  │ Records    │  │ Records      │  │ Appointments        │  │
-  │  │ Register   │  │ Payments   │  │ Earnings     │  │ Payments            │  │
-  │  │ OTP        │  │ Profile    │  │ Profile      │  │ Reviews             │  │
-  │  │ OAuth2     │  └────────────┘  └──────────────┘  │ Profile             │  │
+  │  ┌────────────┐  ┌────────────┐  ┌──────────────┐   ┌─────────────────────┐  │
+  │  │ Public     │  │  Patient   │  │  Provider    │   │  Admin              │  │
+  │  │ Pages      │  │  Portal    │  │  Portal      │   │  Portal             │  │
+  │  │            │  │            │  │              │   │                     │  │
+  │  │ Landing    │  │ Dashboard  │  │ Dashboard    │   │ Dashboard           │  │
+  │  │ FindDoctors│  │ Book Appt  │  │ Schedule     │   │ Users               │  │
+  │  │ DoctorProf │  │Appointments│  │ Appointments │   │ Providers           │  │
+  │  │ Login      │  │ Records    │  │ Records      │   │ Appointments        │  │
+  │  │ Register   │  │ Payments   │  │ Earnings     │   │ Payments            │  │
+  │  │ OTP        │  │ Profile    │  │ Profile      │   │ Reviews             │  │
+  │  │ OAuth2     │  └────────────┘  └──────────────┘   │ Profile             │  │
   │  │ ForgotPwd  │                                     └─────────────────────┘  │
   │  └────────────┘                                                              │
   │                                                                              │
-  │  src/utils/api.js  ─── Axios instance ─── JWT interceptor ─── Retry logic   │
+  │  src/utils/api.js  ─── Axios instance ─── JWT interceptor ─── Retry logic    │
   └──────────────────────────────────┬───────────────────────────────────────────┘
                                      │ All HTTP → http://localhost:8080
                                      ▼
-  ┌──────────────────────────────────────────────────────────────────────────────┐
-  │                     API GATEWAY  :8080                                       │
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │                     API GATEWAY  :8080                                      │
   │   • JWT Auth Filter  → injects X-User-Id, X-User-Role, X-User-Email         │
   │   • Routes all traffic to microservices via Eureka (lb://)                  │
-  │   • CORS: localhost:5173, localhost:5174                                     │
+  │   • CORS: localhost:5173, localhost:5174                                    │
   └────────────┬─────────────────────────────────────────────────────┬──────────┘
                │                                                     │
     ┌──────────▼──────────────────────────────────────────────────┐  │
     │           MICROSERVICES (Eureka-Discovered)                 │  │
     │                                                             │  │
-    │  auth-service       :8081  ── /auth/**                     │  │
-    │  provider-service   :8082  ── /providers/**                │  │
-    │  schedule-service   :8083  ── /slots/**                    │  │
-    │  appointment-service:8084  ── /appointments/**             │  │
-    │  payment-service    :8085  ── /payments/**                 │  │
-    │  review-service     :8086  ── /reviews/**                  │  │
-    │  notification-service:8087 ── /notifications/**            │  │
-    │  record-service     :8088  ── /records/**                  │  │
+    │  auth-service       :8081  ── /auth/**                      │  │
+    │  provider-service   :8082  ── /providers/**                 │  │
+    │  schedule-service   :8083  ── /slots/**                     │  │
+    │  appointment-service:8084  ── /appointments/**              │  │
+    │  payment-service    :8085  ── /payments/**                  │  │
+    │  review-service     :8086  ── /reviews/**                   │  │
+    │  notification-service:8087 ── /notifications/**             │  │
+    │  record-service     :8088  ── /records/**                   │  │
     └─────────────────────────────────────────────────────────────┘  │
                                                                      │
     ┌────────────────────────────────────────────────────────────────▼──────────┐
     │               EUREKA SERVER  :8761  (Service Registry)                    │
-    └────────────────────────────────────────────────────────────────────────────┘
+    └───────────────────────────────────────────────────────────────────────────┘
 
   ┌──────────────────────────────────────────────────────────────────────────────┐
   │             RAZORPAY (Payment Gateway)                                       │
-  │   Frontend initiates → backend verifies → payment-service confirms          │
-  │   Key stored in .env (VITE_RAZORPAY_KEY) — never committed to Git           │
+  │   Frontend initiates → backend verifies → payment-service confirms           │
+  │   Key stored in .env (VITE_RAZORPAY_KEY) — never committed to Git            │
   └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1156,17 +1150,15 @@ Usually caused by a build error or missing route component
 
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
-## 👨‍💻 Author
+## Author👨‍💻
+
+[Harshal Choudhary](https://github.com/Harshal-25C) - Software Developer👨‍💻 | Cloud Enthusiast              
+B.Tech - `[Computer Science & Engineering]`         
+Java | Spring Boot | Maven | JWT & Security | OAuth | React.js | Clean Architecture 
 
 <div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=rect&color=gradient&customColorList=6,11,20&height=2" width="100%"/>
-
-<br/>
-
-<a href="https://github.com/Harshal-25C">
-  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&size=18&duration=3000&pause=1000&color=818CF8&center=true&vCenter=true&width=600&lines=👨‍💻+Harshal+Choudhary;Software+Developer+%7C+Cloud+Enthusiast;B.Tech+Computer+Science+%26+Engineering;Java+%7C+Spring+Boot+%7C+React.js+%7C+Clean+Architecture" alt="Author Typing" />
-</a>
 
 <br/>
 
