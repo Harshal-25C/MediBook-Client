@@ -189,8 +189,8 @@ export default function BookAppointmentPage() {
 
         try {
           console.log('🔄 Confirming appointment...');
-          await appointmentAPI.updateStatus(appointmentId, 'CONFIRMED');
-          console.log('✅ Appointment confirmed');
+          await appointmentAPI.updateStatus(appointmentId, 'SCHEDULED');
+          console.log('✅ Appointment confirmed as SCHEDULED');
           setPaymentId(response.razorpay_payment_id);
           sendBookingNotifications(appointmentId, selectedDate, selectedSlot?.startTime);
           // Also send payment-specific email to patient
@@ -255,8 +255,8 @@ export default function BookAppointmentPage() {
 
       // Step 2 — Handle COD: Confirm appointment immediately
       if (payMethod === 'COD') {
-        // Mark appointment as CONFIRMED for COD
-        await appointmentAPI.updateStatus(appointmentId, 'CONFIRMED');
+        // Mark appointment as SCHEDULED for COD (no online payment needed)
+        await appointmentAPI.updateStatus(appointmentId, 'SCHEDULED');
         sendBookingNotifications(appointmentId, selectedDate, selectedSlot?.startTime);
         setLoading(false);
         setStep(4);

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PatientSidebar, Topbar, StatusBadge, Loader } from '../../components/Layout';
-import { appointmentAPI, reviewAPI, paymentAPI, notifAPI, getUser, formatDate, formatTime, providerAPI } from '../../utils/api';
+import { appointmentAPI, reviewAPI, paymentAPI, notifAPI, slotAPI, getUser, formatDate, formatTime, providerAPI } from '../../utils/api';
 
 // Helper to get doctor name from various field names
 const getDoctorName = (provider) => {
@@ -71,55 +71,100 @@ function ReviewModal({ appointment, onClose, onSubmit }) {
 }
 
 function RescheduleModal({ appointment, onClose, onDone }) {
-  const [newSlotId, setNewSlotId] = useState('');
-  const [newDate, setNewDate] = useState('');
-  const [newStart, setNewStart] = useState('');
-  const [newEnd, setNewEnd] = useState('');
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = tomorrow.toISOString().split('T')[0];
+
+  const [selectedDate, setSelectedDate] = useState('');
+  const [slots, setSlots] = useState([]);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    setSlotsLoading(true);
+    setSelectedSlot(null);
+    slotAPI.getAvailable(appointment.providerId, selectedDate)
+      .then(r => setSlots(r.data || []))
+      .catch(() => setSlots([]))
+      .finally(() => setSlotsLoading(false));
+  }, [selectedDate]);
+
   const submit = async () => {
+    if (!selectedSlot) return;
     setLoading(true);
     try {
       await appointmentAPI.reschedule(appointment.appointmentId, {
-        newSlotId, newDate, newStartTime: newStart, newEndTime: newEnd
+        newSlotId: String(selectedSlot.slotId),
+        newDate: selectedDate,
+        newStartTime: selectedSlot.startTime,
+        newEndTime: selectedSlot.endTime,
       });
       onDone();
     } catch (e) { alert(e.response?.data?.message || 'Reschedule failed.'); }
     finally { setLoading(false); }
   };
+
   return (
     <div className="modal-overlay">
-      <div className="modal">
+      <div className="modal" style={{ maxWidth: 520 }}>
         <div className="modal-header">
-          <span className="modal-title">Reschedule Appointment</span>
+          <span className="modal-title">Reschedule Appointment #{appointment.appointmentId}</span>
           <button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
         </div>
-        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="alert alert-info" style={{ fontSize: 13 }}>
+            Current: {formatDate(appointment.appointmentDate)} at {formatTime(appointment.startTime)}
+          </div>
           <div className="form-group">
-            <label className="form-label">New Slot ID</label>
-            <input className="form-input" type="number" placeholder="Enter new slot ID"
-              value={newSlotId} onChange={e => setNewSlotId(e.target.value)} />
+            <label className="form-label">New Date</label>
+            <input className="form-input" type="date" min={minDate}
+              value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
           </div>
-          <div className="grid-2">
+
+          {selectedDate && (
             <div className="form-group">
-              <label className="form-label">New Date</label>
-              <input className="form-input" type="date" value={newDate} onChange={e => setNewDate(e.target.value)} />
+              <label className="form-label">Select New Time Slot</label>
+              {slotsLoading ? (
+                <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Loading slots...</p>
+              ) : slots.length === 0 ? (
+                <div className="alert alert-warning" style={{ fontSize: 13 }}>
+                  No available slots for this date. Try another date.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8 }}>
+                  {slots.map(s => (
+                    <button key={s.slotId}
+                      disabled={s.isBooked}
+                      onClick={() => setSelectedSlot(s)}
+                      style={{
+                        padding: '10px 8px',
+                        borderRadius: 8,
+                        border: s.isBooked ? '2px solid #ccc'
+                          : selectedSlot?.slotId === s.slotId ? '2px solid var(--primary)'
+                          : '2px solid var(--secondary)',
+                        background: s.isBooked ? '#f5f5f5'
+                          : selectedSlot?.slotId === s.slotId ? 'var(--primary)'
+                          : 'var(--secondary)',
+                        color: s.isBooked ? '#999' : '#fff',
+                        cursor: s.isBooked ? 'not-allowed' : 'pointer',
+                        fontWeight: 700, fontSize: 12,
+                        opacity: s.isBooked ? 0.5 : 1,
+                      }}>
+                      {formatTime(s.startTime)}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-          <div className="grid-2">
-            <div className="form-group">
-              <label className="form-label">Start Time</label>
-              <input className="form-input" type="time" value={newStart} onChange={e => setNewStart(e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">End Time</label>
-              <input className="form-input" type="time" value={newEnd} onChange={e => setNewEnd(e.target.value)} />
-            </div>
-          </div>
+          )}
         </div>
         <div className="modal-footer">
           <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={submit} disabled={loading}>
-            {loading ? <span className="spinner" /> : 'Reschedule'}
+          <button className="btn btn-primary" onClick={submit}
+            disabled={loading || !selectedSlot}>
+            {loading ? <span className="spinner" /> : 'Confirm Reschedule'}
           </button>
         </div>
       </div>
@@ -236,7 +281,9 @@ export default function PatientAppointments() {
   };
 
   const filtered = tab === 'all' ? appointments
-    : appointments.filter(a => a.status === tab);
+    : tab === 'SCHEDULED'
+      ? appointments.filter(a => a.status === 'SCHEDULED' || a.status === 'CONFIRMED' || a.status === 'PENDING_PAYMENT')
+      : appointments.filter(a => a.status === tab);
 
   const tabs = [
     { key: 'all', label: 'All' },
@@ -300,7 +347,7 @@ export default function PatientAppointments() {
                         {a.notes && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Note: {a.notes}</div>}
                       </div>
                       <div className="appt-actions">
-                        {(a.status === 'SCHEDULED' || a.status === 'CONFIRMED') && (
+                        {(a.status === 'SCHEDULED' || a.status === 'CONFIRMED' || a.status === 'PENDING_PAYMENT') && (
                           <>
                             <button className="btn btn-outline btn-sm" onClick={() => setRescheduleAppt(a)}>Reschedule</button>
                             <button className="btn btn-danger btn-sm" disabled={actionLoading === a.appointmentId}
