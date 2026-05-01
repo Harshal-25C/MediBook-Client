@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { ProviderSidebar, Topbar, StatusBadge, Loader } from '../../components/Layout';
 import { appointmentAPI, recordAPI, providerAPI, notifAPI, getUser, formatDate, formatTime, authAPI } from '../../utils/api';
 
-// Helper to get patient name from various field names
 const getPatientName = (patient) => {
   if (!patient) return 'Patient';
   if (patient.fullName && !patient.fullName.includes('Patient')) return patient.fullName;
@@ -93,8 +92,7 @@ export default function ProviderAppointments() {
     }).then(async r => {
       const appts = r.data || [];
       setAppointments(appts);
-      
-      // Fetch patient details for all unique patient IDs
+
       const uniquePatientIds = [...new Set(appts.map(a => a.patientId))];
       const patientMap = {};
       for (const patientId of uniquePatientIds) {
@@ -102,7 +100,6 @@ export default function ProviderAppointments() {
           const patRes = await authAPI.getProfile(patientId);
           patientMap[patientId] = patRes.data;
         } catch (err) {
-          console.warn(`Failed to fetch patient ${patientId}:`, err);
           patientMap[patientId] = { userId: patientId, fullName: `Patient #${patientId}` };
         }
       }
@@ -111,32 +108,53 @@ export default function ProviderAppointments() {
     .catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const complete = async (id, currentStatus) => {
-    setActionLoading(id);
+  /**
+   * FIX: Mark appointment COMPLETED.
+   * Passes providerId to backend — backend verifies only the assigned provider can do this.
+   */
+  const complete = async (id) => {
+    if (!confirm('Mark this appointment as COMPLETED?')) return;
+    setActionLoading(id + '_complete');
     try {
-      if (currentStatus === 'CONFIRMED') {
-        // CONFIRMED = paid appointment, use updateStatus directly
-        await appointmentAPI.updateStatus(id, 'COMPLETED');
-      } else {
-        // SCHEDULED = unpaid/COD appointment, use complete endpoint
-        await appointmentAPI.complete(id);
-      }
-      setAppointments(prev => prev.map(a => a.appointmentId === id ? { ...a, status: 'COMPLETED' } : a));
-    } catch (e) { alert(e.response?.data?.message || 'Error marking complete'); }
+      await appointmentAPI.complete(id, providerId);
+      setAppointments(prev => prev.map(a =>
+        a.appointmentId === id ? { ...a, status: 'COMPLETED' } : a
+      ));
+    } catch (e) {
+      alert(e.response?.data?.message || 'Error marking complete. Make sure you are the assigned provider.');
+    }
+    finally { setActionLoading(null); }
+  };
+
+  /**
+   * FIX: Mark appointment NO_SHOW.
+   * Passes providerId to backend — backend verifies only the assigned provider can do this.
+   */
+  const markNoShow = async (id) => {
+    if (!confirm('Mark this appointment as NO_SHOW? This means the patient did not attend.')) return;
+    setActionLoading(id + '_noshow');
+    try {
+      await appointmentAPI.noShow(id, providerId);
+      setAppointments(prev => prev.map(a =>
+        a.appointmentId === id ? { ...a, status: 'NO_SHOW' } : a
+      ));
+    } catch (e) {
+      alert(e.response?.data?.message || 'Error marking NO_SHOW. Make sure you are the assigned provider.');
+    }
     finally { setActionLoading(null); }
   };
 
   const cancel = async (id) => {
     if (!confirm('Cancel this appointment?')) return;
-    setActionLoading(id + 'c');
+    setActionLoading(id + '_cancel');
     try {
       await appointmentAPI.cancel(id);
-      setAppointments(prev => prev.map(a => a.appointmentId === id ? { ...a, status: 'CANCELLED' } : a));
+      setAppointments(prev => prev.map(a =>
+        a.appointmentId === id ? { ...a, status: 'CANCELLED' } : a
+      ));
 
-      // Find appointment in local state to get patientId
       const appt = appointments.find(a => a.appointmentId === id);
 
-      // Notify provider themselves via APP (bell) — user.userId is the provider's userId
       notifAPI.send({
         recipientId: user.userId,
         type: 'CANCELLATION',
@@ -147,13 +165,12 @@ export default function ProviderAppointments() {
         relatedType: 'APPOINTMENT'
       }).catch(() => {});
 
-      // Notify patient via APP (bell) and EMAIL — appt.patientId IS the patient's userId
       if (appt?.patientId) {
         notifAPI.send({
           recipientId: appt.patientId,
           type: 'CANCELLATION',
           title: 'Appointment Cancelled by Doctor',
-          message: `Your appointment #${id} scheduled for ${appt?.appointmentDate || ''} has been cancelled by your doctor. Please rebook at your convenience.`,
+          message: `Your appointment #${id} scheduled for ${appt?.appointmentDate || ''} has been cancelled by your doctor. Please rebook.`,
           channel: 'APP',
           relatedId: id,
           relatedType: 'APPOINTMENT'
@@ -170,14 +187,28 @@ export default function ProviderAppointments() {
         }).catch(() => {});
       }
 
-    } catch (e) { alert(e.response?.data?.message || 'Error'); }
+    } catch (e) { alert(e.response?.data?.message || 'Error cancelling.'); }
     finally { setActionLoading(null); }
   };
 
-  let filtered = tab === 'all' ? appointments : appointments.filter(a => a.status === tab);
+  // FIX: Include CONFIRMED and PENDING_PAYMENT in the Scheduled tab
+  let filtered = appointments;
+  if (tab === 'SCHEDULED') {
+    filtered = appointments.filter(a =>
+      a.status === 'SCHEDULED' || a.status === 'CONFIRMED' || a.status === 'PENDING_PAYMENT'
+    );
+  } else if (tab !== 'all') {
+    filtered = appointments.filter(a => a.status === tab);
+  }
   if (filterDate) filtered = filtered.filter(a => a.appointmentDate === filterDate);
 
   const today = new Date().toISOString().split('T')[0];
+
+  // Helper: is this appointment actionable by this provider?
+  // Includes PENDING_PAYMENT in case the status update call failed after payment
+  const isActionable = (appt) =>
+    (appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED' || appt.status === 'PENDING_PAYMENT') &&
+    appt.providerId === providerId;
 
   return (
     <div className="dashboard-layout">
@@ -201,7 +232,13 @@ export default function ProviderAppointments() {
           </div>
 
           <div className="tabs">
-            {[{ key: 'all', label: 'All' }, { key: 'SCHEDULED', label: 'Scheduled' }, { key: 'COMPLETED', label: 'Completed' }, { key: 'CANCELLED', label: 'Cancelled' }].map(t => (
+            {[
+              { key: 'all', label: 'All' },
+              { key: 'SCHEDULED', label: 'Scheduled' },
+              { key: 'COMPLETED', label: 'Completed' },
+              { key: 'NO_SHOW', label: 'No Show' },
+              { key: 'CANCELLED', label: 'Cancelled' }
+            ].map(t => (
               <div key={t.key} className={`tab ${tab === t.key ? 'active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</div>
             ))}
           </div>
@@ -215,6 +252,11 @@ export default function ProviderAppointments() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {filtered.map(a => {
                 const d = new Date(a.appointmentDate);
+                const canAct = isActionable(a);
+                const isCompletingThis = actionLoading === a.appointmentId + '_complete';
+                const isMarkingNoShow = actionLoading === a.appointmentId + '_noshow';
+                const isCancellingThis = actionLoading === a.appointmentId + '_cancel';
+
                 return (
                   <div key={a.appointmentId} className="card">
                     <div style={{ padding: '16px 20px', display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -234,18 +276,48 @@ export default function ProviderAppointments() {
                           <span>Appt #{a.appointmentId}</span>
                         </div>
                         {a.notes && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, fontStyle: 'italic' }}>"{a.notes}"</div>}
+                        {/* FIX: Warn if this is another provider's appointment (shouldn't happen but just in case) */}
+                        {(a.status === 'SCHEDULED' || a.status === 'CONFIRMED') && a.providerId !== providerId && (
+                          <div style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>
+                            ⚠️ This appointment is assigned to a different provider.
+                          </div>
+                        )}
                       </div>
+
                       <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
-                        {(a.status === 'SCHEDULED' || a.status === 'CONFIRMED') && (
+                        {canAct && (
                           <>
-                            <button className="btn btn-secondary btn-sm" disabled={actionLoading === a.appointmentId}
-                              onClick={() => complete(a.appointmentId, a.status)}>
-                              {actionLoading === a.appointmentId ? <span className="spinner" /> : '✓ Complete'}
+                            {/* FIX: Complete button — sends providerId for backend auth check */}
+                            <button
+                              className="btn btn-secondary btn-sm"
+                              disabled={isCompletingThis || isMarkingNoShow || isCancellingThis}
+                              onClick={() => complete(a.appointmentId)}
+                              title="Mark as Completed — patient attended the appointment"
+                            >
+                              {isCompletingThis ? <span className="spinner" /> : '✓ Completed'}
                             </button>
-                            <button className="btn btn-danger btn-sm" disabled={actionLoading === a.appointmentId + 'c'}
-                              onClick={() => cancel(a.appointmentId)}>Cancel</button>
+
+                            {/* FIX: NEW — NO_SHOW button — sends providerId for backend auth check */}
+                            <button
+                              className="btn btn-outline btn-sm"
+                              disabled={isCompletingThis || isMarkingNoShow || isCancellingThis}
+                              onClick={() => markNoShow(a.appointmentId)}
+                              title="Mark as No-Show — patient did not attend"
+                              style={{ borderColor: 'var(--warning)', color: 'var(--warning)' }}
+                            >
+                              {isMarkingNoShow ? <span className="spinner" /> : '⚠ No Show'}
+                            </button>
+
+                            <button
+                              className="btn btn-danger btn-sm"
+                              disabled={isCompletingThis || isMarkingNoShow || isCancellingThis}
+                              onClick={() => cancel(a.appointmentId)}
+                            >
+                              {isCancellingThis ? <span className="spinner" /> : 'Cancel'}
+                            </button>
                           </>
                         )}
+
                         {a.status === 'COMPLETED' && (
                           <button className="btn btn-outline btn-sm" onClick={() => setRecordModal(a)}>
                             📋 Add Record

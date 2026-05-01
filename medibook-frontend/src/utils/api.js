@@ -183,7 +183,8 @@ export const appointmentAPI = {
     retryRequest(() => api.get(`/appointments/provider/${pid}/date?date=${date}`), 2, 500),
   cancel: (id) => retryRequest(() => api.put(`/appointments/${id}/cancel`), 2, 500),
   reschedule: (id, data) => retryRequest(() => api.put(`/appointments/${id}/reschedule`, data), 2, 500),
-  complete: (id) => retryRequest(() => api.put(`/appointments/${id}/complete`), 2, 500),
+  complete: (id, providerId) => retryRequest(() => api.put(`/appointments/${id}/complete`, { providerId }), 2, 500),
+  noShow: (id, providerId) => retryRequest(() => api.put(`/appointments/${id}/no-show`, { providerId }), 2, 500),
   updateStatus: (id, status) =>
     retryRequest(() => api.put(`/appointments/${id}/status?status=${status}`), 2, 500),
   getCount: (pid) => retryRequest(() => api.get(`/appointments/provider/${pid}/count`), 2, 500),
@@ -270,6 +271,8 @@ export const formatTime = (t) => {
 export const getStatusBadge = (status) => {
   const map = {
     SCHEDULED: 'badge-blue',
+    CONFIRMED: 'badge-blue',
+    PENDING_PAYMENT: 'badge-yellow',
     COMPLETED: 'badge-green',
     CANCELLED: 'badge-red',
     NO_SHOW: 'badge-yellow',
