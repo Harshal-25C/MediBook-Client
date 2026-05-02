@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { AdminSidebar, Topbar, StatusBadge, Loader } from '../../components/Layout';
-import { providerAPI, appointmentAPI, paymentAPI, notifAPI, getUser } from '../../utils/api';
+import { providerAPI, appointmentAPI, paymentAPI, notifAPI, authAPI, getUser } from '../../utils/api';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -28,17 +28,27 @@ export default function AdminDashboard() {
     if (!notifForm.title || !notifForm.message) return;
     setSending(true);
     try {
-      // Send to all users (simulate with a bulk send)
-      await notifAPI.send({
-        recipientId: user.userId,
-        type: 'BOOKING',
+      // Fetch all real user IDs from the backend
+      const usersRes = await authAPI.getAllUsers();
+      const allUserIds = (usersRes.data || []).map(u => u.userId);
+
+      if (allUserIds.length === 0) {
+        alert('No users found to notify.');
+        setSending(false);
+        return;
+      }
+
+      // @Async on backend — returns 202 immediately, emails sent in background thread.
+      // Fire and forget — do NOT await, show success instantly.
+      notifAPI.sendBulk({
+        recipientIds: allUserIds,
         title: notifForm.title,
         message: notifForm.message,
-        channel: 'APP',
-      });
+      }).catch(e => console.error('Bulk notify error:', e));
+
+      alert(`Notification queued for ${allUserIds.length} users! Emails will arrive shortly.`);
       setNotifForm({ title: '', message: '' });
-      alert('Platform notification sent!');
-    } catch (e) { alert('Failed to send notification.'); }
+    } catch (e) { alert('Failed to load users: ' + (e.response?.data?.message || e.message)); }
     finally { setSending(false); }
   };
 

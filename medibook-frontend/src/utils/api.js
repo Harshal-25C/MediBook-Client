@@ -122,6 +122,9 @@ export const authAPI = {
   changePassword: (userId, newPassword) =>
     api.put(`/auth/password/${userId}`, { newPassword }),
   deactivate: (userId) => api.put(`/auth/deactivate/${userId}`),
+  reactivate: (userId) => api.put(`/auth/reactivate/${userId}`),
+  getAllUsers: () => api.get('/auth/users'),
+  getUsersByRole: (role) => api.get(`/auth/users/role/${role}`),
 };
 
 // ── PROVIDERS ─────────────────────────────────────
