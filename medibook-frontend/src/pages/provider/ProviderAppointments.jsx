@@ -16,17 +16,37 @@ function MedicalRecordModal({ appointment, onClose, onDone }) {
   const handle = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
   const submit = async () => {
+    if (!form.diagnosis.trim()) {
+      alert('Diagnosis is required.');
+      return;
+    }
+
+    // followUpDate from <input type="date"> is already YYYY-MM-DD (ISO) — safe to send directly.
+    // Guard: if somehow empty string slips through, send null so backend doesn't get a parse error.
+    const followUpDate = form.followUpDate && form.followUpDate.trim() !== ''
+      ? form.followUpDate   // already "YYYY-MM-DD" from the date input
+      : null;
+
     setLoading(true);
     try {
       await recordAPI.create({
         appointmentId: appointment.appointmentId,
         patientId: appointment.patientId,
         providerId: appointment.providerId,
-        ...form,
-        followUpDate: form.followUpDate || null,
+        diagnosis: form.diagnosis,
+        prescription: form.prescription || null,
+        notes: form.notes || null,
+        followUpDate,
       });
       onDone();
-    } catch (e) { alert(e.response?.data?.message || 'Record creation failed.'); }
+    } catch (e) {
+      const msg =
+        e.response?.data?.message ||
+        e.response?.data?.error ||
+        e.message ||
+        'Something went wrong. Please try again later.';
+      alert(msg);
+    }
     finally { setLoading(false); }
   };
 
