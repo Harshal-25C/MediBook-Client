@@ -1,31 +1,36 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Activity,
   ArrowRight,
-  Brain,
   CalendarClock,
   CheckCircle2,
-  Eye,
-  HeartPulse,
   MapPin,
   Search,
   ShieldCheck,
   Sparkles,
   Star,
-  Stethoscope,
   Video,
 } from 'lucide-react';
 import medicalLogo from '../assets/medical-logo.png';
 import { PublicNav } from '../components/Layout';
+import cardiologyImage from '../assets/specializations/cardiology.webp';
+import orthopedicsImage from '../assets/specializations/orthopedics.webp';
+import oncologyImage from '../assets/specializations/oncology.svg';
+import nephrologyImage from '../assets/specializations/nephrology.webp';
+import gastroImage from '../assets/specializations/gastro.webp';
+import urologyImage from '../assets/specializations/urology.webp';
+import neurologyImage from '../assets/specializations/neurology.webp';
+import generalSurgeryImage from '../assets/specializations/GeneralSurgery.png';
 
 const SPECIALIZATIONS = [
-  { name: 'Cardiology', icon: HeartPulse },
-  { name: 'Neurology', icon: Brain },
-  { name: 'Ophthalmology', icon: Eye },
-  { name: 'General Care', icon: Stethoscope },
-  { name: 'Diagnostics', icon: Activity },
-  { name: 'Online Consults', icon: Video },
+  { name: 'Cardiology', image: cardiologyImage },
+  { name: 'Orthopedics', image: orthopedicsImage },
+  { name: 'Oncology', image: oncologyImage },
+  { name: 'Nephrology', image: nephrologyImage },
+  { name: 'Gastroenterology', image: gastroImage },
+  { name: 'Urology', image: urologyImage },
+  { name: 'Neurology', image: neurologyImage },
+  { name: 'General Surgery', image: generalSurgeryImage },
 ];
 
 const FEATURES = [
@@ -224,7 +229,6 @@ export default function LandingPage() {
 
           <div className="spec-grid spec-grid-premium stagger-children">
             {SPECIALIZATIONS.map((spec) => {
-              const Icon = spec.icon;
               return (
                 <button
                   key={spec.name}
@@ -233,7 +237,7 @@ export default function LandingPage() {
                   type="button"
                 >
                   <span className="spec-pill-icon spec-pill-icon-premium">
-                    <Icon size={24} />
+                    <img src={spec.image} alt="" className="specialization-image" />
                   </span>
                   <span className="spec-pill-name">{spec.name}</span>
                   <span className="spec-pill-meta">Explore doctors</span>
