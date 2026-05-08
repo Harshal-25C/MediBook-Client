@@ -625,7 +625,7 @@ function ProviderGridCard({ provider, user, navigate }) {
 
         {/* Fee */}
         <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
-          {provider.consultationFee ? `₹${provider.consultationFee}` : 'Fee N/A'}
+          {provider.consultationFee != null && provider.consultationFee > 0 ? `₹${provider.consultationFee}` : `₹500`}
         </div>
 
         {/* Location */}
@@ -762,7 +762,7 @@ function ProviderListCard({ provider, user, navigate }) {
             </span>
           </div>
           <div style={{ fontWeight: 600 }}>
-            {provider.consultationFee ? `₹${provider.consultationFee}` : 'Fee N/A'}
+            {provider.consultationFee != null && provider.consultationFee > 0 ? `₹${provider.consultationFee}` : `₹500`}
           </div>
           <div style={{ display: 'flex', gap: 3, alignItems: 'center', color: 'var(--text-muted)', fontSize: 11 }}>
             <MapPin size={12} />

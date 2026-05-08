@@ -144,6 +144,11 @@ export const providerAPI = {
     invalidateProviderProfile(id);
     return retryRequest(() => api.put(`/providers/${id}`, data), 2, 500);
   },
+  updateFee: (id, fee) => {
+    invalidateProviderListCache();
+    invalidateProviderProfile(id);
+    return retryRequest(() => api.put(`/providers/${id}/fee?fee=${fee}`), 2, 500);
+  },
   verify: (id) => {
     invalidateProviderListCache();
     invalidateProviderProfile(id);
