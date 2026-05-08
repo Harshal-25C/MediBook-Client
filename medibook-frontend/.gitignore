@@ -14,6 +14,8 @@ build/
 *.swp
 *.swo
 *~
+*.err
+*.out
 
 # OS
 .DS_Store

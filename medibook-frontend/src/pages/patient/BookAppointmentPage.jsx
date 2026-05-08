@@ -100,12 +100,16 @@ export default function BookAppointmentPage() {
         const userData = await userRes.json();
         console.log('User profile response:', userData);
         const fullName = userData.fullName || userData.name || userData.firstName || determineName(providerData);
-        setProvider({ ...providerData, fullName });
+        const merged = { ...providerData, fullName };
+        setProvider(merged);
+        setAmount(merged.consultationFee > 0 ? merged.consultationFee : 500);
       } catch (err) {
         console.warn('Failed to fetch user profile for provider:', err);
         // Fallback: use whatever name field is available in provider data
         const fullName = determineName(providerData);
-        setProvider({ ...providerData, fullName });
+        const merged = { ...providerData, fullName };
+        setProvider(merged);
+        setAmount(providerData.consultationFee > 0 ? providerData.consultationFee : 500);
       }
     }).catch((err) => {
       console.error('Failed to fetch provider:', err);
@@ -543,8 +547,16 @@ export default function BookAppointmentPage() {
 
                 <div className="form-group">
                   <label className="form-label">Consultation Fee (₹)</label>
-                  <input className="form-input" type="number" value={amount}
-                    onChange={e => setAmount(e.target.value)} min="1" />
+                  <input
+                    className="form-input"
+                    type="number"
+                    value={amount}
+                    readOnly
+                    style={{ opacity: 0.7, cursor: 'not-allowed', pointerEvents: 'none' }}
+                  />
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                    Fee is set by the doctor and cannot be changed.
+                  </p>
                 </div>
 
     {/* Payment Method */}
