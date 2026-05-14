@@ -1,4 +1,4 @@
-// ================================================
+﻿// ================================================
 // MediBook API Service
 // All API calls mapped to backend endpoints
 // Base URL: http://localhost:8080
@@ -100,19 +100,36 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 globally
+// Handle 401 globally, but do not break the active login / OTP flow.
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const requestUrl = err.config?.url || '';
+    const authFlowPaths = [
+      '/auth/login',
+      '/auth/register',
+      '/auth/verify-otp',
+      '/auth/resend-otp',
+      '/auth/add-phone',
+      '/auth/forgot-password',
+      '/auth/verify-reset-otp',
+      '/auth/reset-password',
+      '/auth/google/complete',
+    ];
+
+    const isAuthFlowRequest = authFlowPaths.some((path) => requestUrl.includes(path));
+
+    if (err.response?.status === 401 && !isAuthFlowRequest) {
       localStorage.clear();
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(err);
   }
 );
 
-// ── AUTH ──────────────────────────────────────────
+// â”€â”€ AUTH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
@@ -127,7 +144,7 @@ export const authAPI = {
   getUsersByRole: (role) => api.get(`/auth/users/role/${role}`),
 };
 
-// ── PROVIDERS ─────────────────────────────────────
+// â”€â”€ PROVIDERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const providerAPI = {
   register: (data) => {
     invalidateProviderListCache();
@@ -166,7 +183,7 @@ export const providerAPI = {
   },
 };
 
-// ── SLOTS ─────────────────────────────────────────
+// â”€â”€ SLOTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const slotAPI = {
   add: (data) => retryRequest(() => api.post('/slots/add', data), 2, 500),
   addBulk: (data) => retryRequest(() => api.post('/slots/bulk', data), 2, 500),
@@ -180,7 +197,7 @@ export const slotAPI = {
   delete: (id) => retryRequest(() => api.delete(`/slots/${id}`), 2, 500),
 };
 
-// ── APPOINTMENTS ──────────────────────────────────
+// â”€â”€ APPOINTMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const appointmentAPI = {
   book: (data) => retryRequest(() => api.post('/appointments/book', data), 2, 500),
   getById: (id) => retryRequest(() => api.get(`/appointments/${id}`), 2, 500),
@@ -198,7 +215,7 @@ export const appointmentAPI = {
   getCount: (pid) => retryRequest(() => api.get(`/appointments/provider/${pid}/count`), 2, 500),
 };
 
-// ── PAYMENTS ──────────────────────────────────────
+// â”€â”€ PAYMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const paymentAPI = {
   initiate: (data) => api.post('/payments/initiate', data),
   verify: (data) => api.post('/payments/verify', data),
@@ -213,7 +230,7 @@ export const paymentAPI = {
     api.put(`/payments/${id}/status?status=${status}`),
 };
 
-// ── REVIEWS ───────────────────────────────────────
+// â”€â”€ REVIEWS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const reviewAPI = {
   submit: (data) => api.post('/reviews/submit', data),
   getByProvider: (pid) => api.get(`/reviews/provider/${pid}`),
@@ -225,7 +242,7 @@ export const reviewAPI = {
   getCount: (pid) => api.get(`/reviews/provider/${pid}/count`),
 };
 
-// ── NOTIFICATIONS ─────────────────────────────────
+// â”€â”€ NOTIFICATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const notifAPI = {
   send: (data) => api.post('/notifications/send', data),
   sendBulk: (data) => api.post('/notifications/bulk', data),
@@ -237,7 +254,7 @@ export const notifAPI = {
   getAll: () => api.get('/notifications/all'),
 };
 
-// ── RECORDS ───────────────────────────────────────
+// â”€â”€ RECORDS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const recordAPI = {
   create: (data) => api.post('/records/create', data),
   getByAppointment: (id) => api.get(`/records/appointment/${id}`),
@@ -252,7 +269,7 @@ export const recordAPI = {
   getCount: (pid) => api.get(`/records/patient/${pid}/count`),
 };
 
-// ── HELPERS ───────────────────────────────────────
+// â”€â”€ HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getUser = () => {
   try { return JSON.parse(localStorage.getItem('medibook_user')); } catch { return null; }
 };
@@ -267,7 +284,7 @@ export const clearAuth = () => {
 };
 
 export const formatDate = (d) => {
-  if (!d) return '—';
+  if (!d) return 'â€”';
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 export const formatTime = (t) => {
@@ -297,3 +314,4 @@ export const getInitials = (name) => {
 };
 
 export default api;
+
