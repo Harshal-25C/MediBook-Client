@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Stethoscope } from 'lucide-react';
-import { saveAuth } from '../../utils/api';
+import { API_BASE_URL } from '../../utils/api';
 
 export default function OAuth2SelectRole() {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ export default function OAuth2SelectRole() {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:8080/auth/google/complete', {
+      const response = await fetch(`${API_BASE_URL}/auth/google/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

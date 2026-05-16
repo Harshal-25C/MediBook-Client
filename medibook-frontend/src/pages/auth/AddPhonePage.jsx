@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Phone, ArrowRight } from 'lucide-react';
+import { API_BASE_URL } from '../../utils/api';
 
 export default function AddPhonePage() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function AddPhonePage() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8080/auth/add-phone', {
+      const res = await fetch(`${API_BASE_URL}/auth/add-phone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

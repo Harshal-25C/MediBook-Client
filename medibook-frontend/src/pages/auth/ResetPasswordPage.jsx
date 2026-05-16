@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, KeyRound, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { API_BASE_URL } from '../../utils/api';
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -107,7 +108,7 @@ export default function ResetPasswordPage() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8080/auth/verify-reset-otp', {
+      const res = await fetch(`${API_BASE_URL}/auth/verify-reset-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, otp: otpCode }),
@@ -150,7 +151,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8080/auth/reset-password', {
+      const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPassword }),

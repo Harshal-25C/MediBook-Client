@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Clock } from 'lucide-react';
-import { saveAuth } from '../../utils/api';
+import { API_BASE_URL, saveAuth } from '../../utils/api';
 
 export default function OtpPage() {
   const navigate = useNavigate();
@@ -108,7 +108,7 @@ export default function OtpPage() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8080/auth/verify-otp', {
+      const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp: otpCode }),
@@ -157,7 +157,7 @@ export default function OtpPage() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:8080/auth/resend-otp', {
+      const res = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

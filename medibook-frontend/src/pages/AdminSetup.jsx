@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Key, ArrowRight } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/api';
 
 export default function AdminSetup() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function AdminSetup() {
     }
 
     try {
-      const res = await axios.post('http://localhost:8080/auth/admin/register', {
+      const res = await axios.post(`${API_BASE_URL}/auth/admin/register`, {
         fullName: form.fullName,
         email: form.email,
         password: form.password,

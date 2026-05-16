@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { PatientSidebar, Topbar, Loader, Stars } from '../../components/Layout';
-import { providerAPI, slotAPI, appointmentAPI, paymentAPI, notifAPI, getUser, formatTime, formatDate } from '../../utils/api';
+import { API_BASE_URL, providerAPI, slotAPI, appointmentAPI, paymentAPI, notifAPI, getUser, formatTime, formatDate } from '../../utils/api';
 
 const MODES = ['IN_PERSON', 'TELECONSULTATION'];
 const SERVICE_TYPES = ['General Consultation', 'Follow-Up', 'Specialist Consultation', 'Emergency', 'Dental Checkup', 'Eye Checkup'];
@@ -94,7 +94,7 @@ export default function BookAppointmentPage() {
       
       try {
         const userRes = await fetch(
-          `http://localhost:8080/auth/profile/${providerData.userId}`,
+          `${API_BASE_URL}/auth/profile/${providerData.userId}`,
           { headers: { Authorization: `Bearer ${localStorage.getItem('medibook_token')}` } }
         );
         const userData = await userRes.json();
