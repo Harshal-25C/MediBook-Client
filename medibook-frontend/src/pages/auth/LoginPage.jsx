@@ -112,6 +112,11 @@ export default function LoginPage() {
       else if (user.role === 'Admin') navigate('/admin', { replace: true });
       else setError(`Unknown user role: ${user.role}`);
     } catch (err) {
+      if (err.response?.data?.requiresPhone === true) {
+        const encodedEmail = encodeURIComponent(email);
+        navigate(`/add-phone?email=${encodedEmail}`, { replace: true });
+        return;
+      }
       setError(err.response?.data?.message || 'Invalid email or password.');
     } finally {
       setLoading(false);
